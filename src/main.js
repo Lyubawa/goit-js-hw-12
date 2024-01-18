@@ -8,12 +8,12 @@ const form = document.querySelector(".form");
 const gallery = document.querySelector(".gallery");
 const loader = document.querySelector(".loader");
 const loadMoreBtn = document.querySelector(".btn");
-const itemHeight = document.querySelector(".gallery-item");
-
 
 let query;
 let page = 1;
 const perPage = 40;
+
+loadMoreBtn.addEventListener("click", loadMore);
 
 const galleryLightbox = new SimpleLightbox(".gallery a", {
     captionsData: "alt",
@@ -44,6 +44,7 @@ async function searchImages(searchQuery, page) {
         console.error(error);
     }
 }
+
 
 form.addEventListener("submit", (event) => {
     event.preventDefault();
@@ -109,111 +110,36 @@ function renderImage(hits) {
     gallery.insertAdjacentHTML("beforeend", markup);
 }
     
-loadMoreBtn.addEventListener("click", () => {
+async function loadMore(event) {
+    loadMoreBtn.classList.remove("hide");
+    loader.classList.add("visible");
+    const listItem = document.querySelector(".gallery-item:first-child");
+    const itemHeight = listItem.getBoundingClientRect().height;
+
     try {
         page += 1;
-        loadMoreBtn.classList.add("hide");
-        loader.classList.remove("visible");
 
-        const height = itemHeight.getBoundingClientRect().height;
-
-        searchImages(query, page)
-            .then((response) => {
-                renderImage(response.data.hits);
-
-                window.scrollBy(0, height * 2);
-
-                const totalPages = Math.ceil(response.data.totalHits / perPage);
-
-                if (page === totalPages) {
-                    loadMoreBtn.classList.remove("hide");
-                    iziToast.show({
-                        message: "We're sorry, but you've reached the end od search results",
-                        position: "topRight",
-                    });
-                    loader.classList.add("visible");
-                    return;
-                }
-                galleryLightbox.refresh();
-                loadMoreBtn.classList.remove("hide");
-                loader.classList.remove("visible");
+        const {
+            data: { hits, totalHits },
+        } = await searchImages(query, page);
+        const totalPages = Math.ceil(totalHits / perPage);
+        loadMoreBtn.classList.remove("hide");
+        gallery.insertAdjacentHTML("beforeend", renderImage(hits))
+        galleryLightbox.refresh();
+        
+        if (page === totalPages) {
+            loadMoreBtn.classList.remove("hide");
+            iziToast.show({
+                message: "We're sorry, but you've reached the end od search results",
+                position: "topRight",
             });
-    }
-    catch (error) {
+        }
+    } catch (error) {
         console.log(error);
+    } finally {
+        window.scrollBy({
+            top: 2 * itemHeight,
+            behavior: "smooth",
+        });
     }
-});
-
-
-
-
-
-
-
-
-// searchImages(query, page) 
-//     .then(response => {
-//         if (!response.data.hits.length) {
-//             iziToast.error({
-//                     title: "Error",
-//                     message: "Sorry, there are no images matching your search query. Please try again!",
-//                     position: "topRight",
-//                     messageColor: "#ffffff",
-//                     titleColor: "#ffffff",
-//                     iconColor: "#ffffff",
-//                     backgroundColor: "#EF4040",
-//                 });
-//         }
-//         else if (response.data.hits.length < perPage) {
-//             iziToast.show({
-//                 message: "We're sorry, but you've reached the end od search results",
-//                 position: "topRight",
-//             });
-//         }
-//         renderImage(response.data.hits);
-//         galleryLightbox.refresh();
-//         form.reset();
-//     })
-//     .catch((error) => console.log(error))
-
-// 
-
-// const createImagesRequest = (searchQuery) => {
-//     let page = 1;
-//     let isLastPage = false;
-//     const perPage = 40;
-
-//     return async () => {
-//         try {
-//             if (isLastPage) return;
-
-//             const { hits, totalHits } = await searchImages({ page, perPage, searchQuery });
-
-//             if (page >= Math.ceil(totalHits / perPage)) {
-//                 isLastPage = true;
-//             }
-//             page += 1;
-//             return hits;
-//         }
-//         catch (error) {
-//             console.error(error);
-//         }
-//     }
-// }
-
-
-
-
-
-
-
-
-
-// 
-
-
-
-
-// axios("https://pixabay.com/api/?key=41672793-a8580f18ed6f224a15f8d2674") 
-//     .then(response => console.log(response))
-// .catch(error => console.log(error))
+}
