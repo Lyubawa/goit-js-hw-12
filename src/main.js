@@ -47,6 +47,7 @@ async function searchImages(searchQuery, page) {
 
 form.addEventListener("submit", (event) => {
     event.preventDefault();
+    loadMoreBtn.classList.add("hide");
     page = 1;
     gallery.innerHTML = "";
     loader.classList.remove("visible");
@@ -60,7 +61,7 @@ form.addEventListener("submit", (event) => {
         loader.classList.add("visible");
         return;
     }
-    searchImages(query)
+    searchImages(query, page)
         .then(({ hits, totalHits }) => {
             if (hits.length === 0) {
                 iziToast.error({
