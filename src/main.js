@@ -54,14 +54,14 @@ form.addEventListener("submit", (event) => {
     if (!query) {
         iziToast.error({
             title: "Error",
-            message: "Sorry, imput is empty!",
+            message: "Sorry, input is empty!",
             position: "topRight",
         });
         loader.classList.add("visible");
         return;
     }
     searchImages(query)
-        .then(({ hits }) => {
+        .then(({ hits, totalHits }) => {
             if (hits.length === 0) {
                 iziToast.error({
                     title: "Error",
@@ -78,6 +78,9 @@ form.addEventListener("submit", (event) => {
             loadMoreBtn.classList.remove("hide");
             galleryLightbox.refresh();
             form.reset();
+            if (totalHits <= perPage) {
+                loadMoreBtn.classList.add("hide");
+            }
         })
         .catch((error) => console.log(error))
         .finally(() => {
